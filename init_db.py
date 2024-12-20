@@ -1,3 +1,10 @@
+# Load env vars
+api_grok = "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"
+api_langchain = "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"
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_API_KEY"] = api_langchain
+if not os.environ.get("GROQ_API_KEY"):
+    os.environ["GROQ_API_KEY"] = api_grok
 import os
 import logging
 from langchain_groq import ChatGroq
@@ -10,13 +17,7 @@ from pypdf.errors import PdfReadError, PdfStreamError
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 
-# Load env vars
-api_grok = "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"
-api_langchain = "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"
-os.environ["LANGCHAIN_TRACING_V2"] = "true"
-os.environ["LANGCHAIN_API_KEY"] = api_langchain
-if not os.environ.get("GROQ_API_KEY"):
-    os.environ["GROQ_API_KEY"] = api_grok
+
 
 # Initialize language model, embeddings and text splitter
 llm = ChatGroq(model_name="mixtral-8x7b-32768", temperature=0.7, max_tokens=2048)
@@ -51,7 +52,6 @@ def load_pdfs(pdf_path, is_directory=False):
     return all_documents
 
 
-
 def create_vectorstore(documents, persist_directory, _embeddings):  # Changed embeddings to _embeddings
     logging.info("Creating vector store")
     texts = text_splitter.split_documents(documents)
@@ -64,9 +64,21 @@ def create_vectorstore(documents, persist_directory, _embeddings):  # Changed em
     return vectorstore
 
 
+def check_document_count(persist_directory):
+    # Check if the vector store exists and count the documents
+    if os.path.exists(persist_directory):
+        vectorstore = Chroma(persist_directory=persist_directory, embedding_function=embeddings)
+        # Retrieve all documents from the vector store (or a subset of them)
+        document_ids = vectorstore.get()  # Retrieves the vector store entries
+        document_count = len(document_ids)  # Count the number of documents
+        logging.info(f"Vectorstore contains {document_count} documents.")
+    else:
+        logging.warning("Vectorstore does not exist.")
+    
+
 def main():
     pdf_path = "/home/updog/ragllm/downloaded_pdfs" # path to the folder where PDFs are stored
-    persist_directory = os.path.join("chroma_db",  os.path.basename(pdf_path) ) # Changed folder path
+    persist_directory = os.path.join("chroma_db",  os.path.basename(pdf_path)) # Changed folder path
     logging.info("Starting initialization of the database...")
     documents = load_pdfs(pdf_path, is_directory=True)
     
@@ -77,6 +89,8 @@ def main():
             logging.info(f"Vectorstore created and saved in: {persist_directory}")
         else:
             logging.info(f"Vectorstore already exists in: {persist_directory}")
+        # Check the document count
+        check_document_count(persist_directory)
     else:
         logging.warning("No documents were loaded, therefore no vectorstore will be created")
     logging.info("Finished initialization of the database.")
