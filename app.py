@@ -6,10 +6,8 @@ from langchain_chroma import Chroma
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain.chains import ConversationalRetrievalChain
 from langchain.memory import ConversationBufferMemory
-from langchain_core.messages import HumanMessage, AIMessage
 from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
 from pypdf.errors import PdfReadError, PdfStreamError
-
 
 # Load env vars
 api_grok = "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"
@@ -29,7 +27,6 @@ def initialize_models():
 
 llm, embeddings = initialize_models()
 text_splitter = RecursiveCharacterTextSplitter(chunk_size=1000, chunk_overlap=200, length_function=len)
-
 
 def load_pdfs(pdf_path, is_directory=False):
     all_documents = []
@@ -93,7 +90,9 @@ def main():
        </style>
        """, unsafe_allow_html=True)
 
-    st.title("واجهة نموذج لغوي كبير")
+
+    st.markdown("<h1 style='text-align: center;'>Sadi9 lfla7 - صديق الفلاح</h1>", unsafe_allow_html=True)
+    st.markdown("<p style='text-align: center;'> اسألني أي شيء عن المستندات الخاصة بك.</p>", unsafe_allow_html=True)
 
     pdf_path = "/home/updog/ragllm/downloaded_pdfs"
     persist_directory = os.path.join("chroma_db", os.path.basename(pdf_path))
@@ -105,23 +104,24 @@ def main():
         with st.spinner("جارٍ تحميل قاعدة البيانات المتجهة..."):
             vectorstore = load_vectorstore(persist_directory, embeddings)
 
-    if "chat_history" not in st.session_state:
-        st.session_state.chat_history = ConversationBufferMemory(memory_key="chat_history", return_messages=True,
-                                                                output_key="answer")
-    chain = setup_chain(vectorstore, llm, st.session_state.chat_history)
+    if "memory" not in st.session_state:
+       st.session_state.memory = ConversationBufferMemory(memory_key="chat_history", return_messages=True, output_key="answer")
+
+    chain = setup_chain(vectorstore, llm, st.session_state.memory)
 
     question = st.text_input("اطرح سؤالاً حول المستند:", placeholder="اكتب سؤالك هنا")
 
     if question:
         with st.spinner("جارٍ إنشاء الإجابة..."):
             response = query_documents(chain, question)
-            st.write("الإجابة:", response["answer"])
+            st.markdown(f"<p style='font-size: 18px;'><b>الإجابة:</b></p>", unsafe_allow_html=True)
+            st.write(response["answer"])
 
             with st.expander("المصادر"):
                 for doc in response["source_documents"]:
-                    source = doc.metadata.get('source', 'N/A')  # Get the file source, set N/A if not found
-                    st.write(f"- المصدر: {source}") # Display source
-                    st.write(f"   - {doc.page_content[:200]}...") # Show the content snippet
+                    source = doc.metadata.get('source', 'N/A')
+                    st.markdown(f"<p style='font-size: 16px;'><b>- المصدر:</b> {source}</p>", unsafe_allow_html=True)
+                    st.write(f"   - {doc.page_content[:200]}...")
 
 if __name__ == "__main__":
     main()
