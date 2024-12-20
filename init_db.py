@@ -1,10 +1,3 @@
-# Load env vars
-api_grok = "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"
-api_langchain = "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"
-os.environ["LANGCHAIN_TRACING_V2"] = "true"
-os.environ["LANGCHAIN_API_KEY"] = api_langchain
-if not os.environ.get("GROQ_API_KEY"):
-    os.environ["GROQ_API_KEY"] = api_grok
 import os
 import logging
 from langchain_groq import ChatGroq
@@ -13,6 +6,14 @@ from langchain_chroma import Chroma
 from langchain.text_splitter import RecursiveCharacterTextSplitter
 from langchain_community.document_loaders import PyPDFLoader, DirectoryLoader
 from pypdf.errors import PdfReadError, PdfStreamError
+# Load env vars
+api_grok = "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"
+api_langchain = "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"
+os.environ["LANGCHAIN_TRACING_V2"] = "true"
+os.environ["LANGCHAIN_API_KEY"] = api_langchain
+if not os.environ.get("GROQ_API_KEY"):
+    os.environ["GROQ_API_KEY"] = api_grok
+
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
